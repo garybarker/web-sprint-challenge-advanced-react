@@ -26,7 +26,7 @@ const AppFunctional = (props) => {
     const {id} = event.target;
     const newGrid = [...state.grid];
     const i = newGrid.indexOf('B');
-    
+
     if(id === 'left' && state.x > 1){
       newGrid[i] = toggle(newGrid[i]);
       newGrid[i - 1] = toggle(newGrid[i - 1]);
@@ -44,6 +44,7 @@ const AppFunctional = (props) => {
       newGrid[i + 3] = toggle(newGrid[i + 3]);
       setState({...state, grid: newGrid, y: state.y + 1, steps: state.steps + 1});
     }else if(id === 'reset'){
+      message.textContent = ``;
       setState({
         grid: ['', '', '', '', 'B', '', '', '', ''],
         x: 2,

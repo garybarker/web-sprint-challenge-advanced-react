@@ -44,6 +44,7 @@ export default class AppClass extends React.Component {
       newGrid[i + 3] = this.toggle(newGrid[i + 3]);
       this.setState({grid: newGrid, y: this.state.y + 1, steps: this.state.steps + 1});
     }else if(id === 'reset'){
+      message.textContent = ``;
       this.setState({
         grid: ['', '', '', '', 'B', '', '', '', ''],
         x: 2,
@@ -56,6 +57,9 @@ export default class AppClass extends React.Component {
     }
     
   }
+
+  co
+
 
   handleChange(event){
     this.setState({email: event.target.value});
