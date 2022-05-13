@@ -11,6 +11,8 @@ export default class AppClass extends React.Component {
       steps: 0,
       email: ''
     }
+
+   
     this.toggle = this.toggle.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -23,8 +25,8 @@ export default class AppClass extends React.Component {
   handleClick(event){
     const {id} = event.target;
     const newGrid = [...this.state.grid];
-    const message = document.getElementById('message');
     const i = newGrid.indexOf('B');
+    const message = document.getElementById('message');
     if(id === 'left' && this.state.x > 1){
       newGrid[i] = this.toggle(newGrid[i]);
       newGrid[i - 1] = this.toggle(newGrid[i - 1]);
@@ -60,15 +62,16 @@ export default class AppClass extends React.Component {
   }
 
   async handleSubmit(event){
-    const  message = document.getElementById('message');
+    
     event.preventDefault();
-    const formData = await {x: this.state.x, y: this.state.y, steps: this.state.steps, email: this.state.email};
-    axios.post('http://localhost:9000/api/result', formData)
+    const message = document.getElementById('message');
+    const formData = {x: this.state.x, y: this.state.y, steps: this.state.steps, email: this.state.email};
+    await axios.post('http://localhost:9000/api/result', formData)
     .then(res => {
       message.textContent = res.data.message;
     })
     .catch(err => {
-      console.error(err);
+      message.textContent = err.response.data.message;
     })
     .finally(() => {
       this.setState({

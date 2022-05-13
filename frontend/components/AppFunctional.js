@@ -1,92 +1,113 @@
-import React, { useState, useEffect } from 'react';
-import Grid from './Grid';
-import KeyPad from './KeyPad';
-import Form from './Form';
+import React, { useState } from 'react';
 import axios from 'axios';
 
 
 
 
 
-export default function AppFunctional(props) {
+const AppFunctional = (props) => {
 
-  const initialGrid = ['', '', '', '', 'B', '', '', '', ''];
+  const [state, setState] = useState({
+    grid: ['', '', '', '', 'B', '', '', '', ''],
+    x: 2,
+    y: 2,
+    steps: 0,
+    email: ''
+  })
 
-  const [grid, setGrid] = useState(initialGrid);
-  const [steps, setSteps] = useState(-1);
-  const [x, setX] = useState(2);
-  const [y, setY] = useState(2);
-  const [userEmail, setUserEmail] = useState('');
 
-  const updateEmail = (value) => {
-    setUserEmail(value);
-  }
 
-  useEffect(() => {
-    setSteps(steps+1)
-  }, grid);
-
-  const toggle = (str) => (str === 'B' ? '' : 'B');
   const message = document.getElementById('message');
 
+  const toggle = (str) => (str === 'B' ? '' : 'B');
 
-  const handleClick = (evt) => {
-    const {id} = evt.target;
-    const newGrid = [...grid];
+
+  function handleClick(event){
+    const {id} = event.target;
+    const newGrid = [...state.grid];
     const i = newGrid.indexOf('B');
-    if(id === 'reset'){
-      setGrid([initialGrid])
-    }
-    if(id === 'left' && x > 1){
+    
+    if(id === 'left' && state.x > 1){
       newGrid[i] = toggle(newGrid[i]);
       newGrid[i - 1] = toggle(newGrid[i - 1]);
-      setX(x - 1);
-    }else if(id === 'right' && x < 3){
+      setState({...state, grid: newGrid, x: state.x - 1, steps: state.steps + 1});
+    }else if(id === 'right' && state.x < 3){
       newGrid[i] = toggle(newGrid[i]);
       newGrid[i + 1] = toggle(newGrid[i + 1]);
-      setX(x + 1);
-    }else if(id === 'up' && y > 1){
+      setState({...state, grid: newGrid, x: state.x + 1, steps: state.steps + 1});
+    }else if((id === 'up') && (state.y > 1)){
       newGrid[i] = toggle(newGrid[i]);
       newGrid[i - 3] = toggle(newGrid[i - 3]);
-      setY(y - 1)
-    }else if(id === 'down' && y < 3){
+      setState({...state, grid: newGrid, y: state.y - 1, steps: state.steps + 1});
+    }else if(id === 'down' && state.y < 3){
       newGrid[i] = toggle(newGrid[i]);
       newGrid[i + 3] = toggle(newGrid[i + 3]);
-      setY(y + 1);
+      setState({...state, grid: newGrid, y: state.y + 1, steps: state.steps + 1});
+    }else if(id === 'reset'){
+      setState({
+        grid: ['', '', '', '', 'B', '', '', '', ''],
+        x: 2,
+        y: 2,
+        steps: 0,
+        email: '' 
+      });
     }else{
       message.textContent = `You can't go ${id}`;
     }
     
-    setGrid(newGrid);
   }
-
- 
-
-  const getCoordinates = () => {
-    const coords =  `(${x}, ${y})`;
-    return coords;
-  }
-
-
-  const handleSubmit = () => {
   
-    const form = {
-      x: x,
-      y: y,
-      steps: steps,
-      email: userEmail
-    }
 
-    axios.post('http://localhost:9000/api/result', form)
-    .then(res => console.log(res))
-    .catch(err => console.error(err))
+  const handleChange = (event) => {
+    setState({...state, email: event.target.value});
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const formData = {x: state.x, y: state.y, steps: state.steps, email: state.email};
+    axios.post('http://localhost:9000/api/result', formData)
+    .then(res => {
+      message.textContent = res.data.message;
+    })
+    .catch(err => {
+      message.textContent = err.response.data.message
+    })
+    .finally(() => {
+      setState({
+        grid: ['', '', '', '', 'B', '', '', '', ''],
+        x: 2,
+        y: 2,
+        steps: 0,
+        email: ''
+      })
+    })
   }
 
   return (
     <div id="wrapper" className={props.className}>
-      <Grid grid={grid} steps={steps} coordinates={getCoordinates()}/>
-      <KeyPad click={handleClick}/>
-      <Form submit={handleSubmit} email={updateEmail}/>
+      <div className="info">
+        <h3 id="coordinates">Coordinates</h3>
+        <h3 id="steps">You moved {state.steps} {state.steps === 1 ? 'time' : 'times'}</h3>
+      </div>
+      <div id="grid">
+        {state.grid.map((val, idx) => <div key={idx} className={val === 'B' ? 'square active' : 'square'}>{val}</div>)}
+      </div>
+      <div className="info">
+        <h3 id="message"></h3>
+      </div>
+      <div id="keypad">
+        <button id="left" onClick={handleClick}>LEFT</button>
+        <button id="up" onClick={handleClick}>UP</button>
+        <button id="right" onClick={handleClick}>RIGHT</button>
+        <button id="down" onClick={handleClick}>DOWN</button>
+        <button id="reset" onClick={handleClick}>reset</button>
+      </div>
+      <form onSubmit={handleSubmit}>
+        <input id="email" type="email" placeholder="type email" onChange={handleChange}></input>
+        <input id="submit" type="submit"></input>
+      </form>
     </div>
   )
 }
+
+export default AppFunctional;
