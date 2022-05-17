@@ -1,117 +1,152 @@
-import React from 'react'
+import React from 'react';
 import axios from 'axios';
 
+
 export default class AppClass extends React.Component {
-  constructor(){
+  constructor() {
     super();
     this.state = {
-      grid: ['', '', '', '', 'B', '', '', '', ''],
       x: 2,
       y: 2,
+      message: null,
       steps: 0,
-      email: ''
+      email: "",
+    }
+    this.move = this.handleClick.bind(this)
+    this.handleSubmit = this.handleSubmit.bind(this)
+  }
+
+  handleClick(direction){
+    switch(direction){
+      case "Left":
+        if(this.state.x <= 1){
+          this.setState({
+            ...this.state,
+            message: "You can't go left"
+
+          })
+          return;
+        }
+        this.setState({
+          ...this.state,
+          x:this.state.x-1,
+          steps: this.state.steps + 1,
+          message: null,
+        })
+        break;
+        case "Right":
+        if(this.state.x >= 3){
+          this.setState({
+            ...this.state,
+            message: "You can't go right"
+
+          })
+          return;
+        }
+        this.setState({
+          ...this.state,
+          x:this.state.x+1,
+          steps: this.state.steps + 1,
+          message: null,
+        })
+        break;
+        case "Down":
+        if(this.state.y >= 3){
+          this.setState({
+            ...this.state,
+            message: "You can't go down"
+
+          })
+          return;
+        }
+        this.setState({
+          ...this.state,
+          y:this.state.y+1,
+          steps: this.state.steps + 1,
+          message: null,
+        })
+        break;
+        case "Up":
+        if(this.state.y <= 1){
+          this.setState({
+            ...this.state,
+            message: "You can't go up"
+
+          })
+          return;
+        }
+        this.setState({
+          ...this.state,
+          y:this.state.y-1,
+          steps: this.state.steps + 1,
+          message: null,
+        })
+        break;
+        case "Reset":
+        
+        this.setState({
+          ...this.state,
+          x: 2,
+          y: 2,
+          steps: 0,
+          message: null,
+          email: "",
+        })
+        break;
     }
 
-   
-    this.toggle = this.toggle.bind(this);
-    this.handleClick = this.handleClick.bind(this);
-    this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  toggle = (str) => (str === 'B' ? '' : 'B');
-  
-
-  handleClick(event){
-    const {id} = event.target;
-    const newGrid = [...this.state.grid];
-    const i = newGrid.indexOf('B');
-    const message = document.getElementById('message');
-    if(id === 'left' && this.state.x > 1){
-      newGrid[i] = this.toggle(newGrid[i]);
-      newGrid[i - 1] = this.toggle(newGrid[i - 1]);
-      this.setState({grid: newGrid, x: this.state.x - 1, steps: this.state.steps + 1});
-    }else if(id === 'right' && this.state.x < 3){
-      newGrid[i] = this.toggle(newGrid[i]);
-      newGrid[i + 1] = this.toggle(newGrid[i + 1]);
-      this.setState({grid: newGrid, x: this.state.x + 1, steps: this.state.steps + 1});
-    }else if(id === 'up' && this.state.y > 1){
-      newGrid[i] = this.toggle(newGrid[i]);
-      newGrid[i - 3] = this.toggle(newGrid[i - 3]);
-      this.setState({grid: newGrid, y: this.state.y - 1, steps: this.state.steps + 1});
-    }else if(id === 'down' && this.state.y < 3){
-      newGrid[i] = this.toggle(newGrid[i]);
-      newGrid[i + 3] = this.toggle(newGrid[i + 3]);
-      this.setState({grid: newGrid, y: this.state.y + 1, steps: this.state.steps + 1});
-    }else if(id === 'reset'){
-      message.textContent = ``;
+  handleSubmit(evt) {
+    evt.preventDefault();
+    const {x, y, steps, email} = this.state
+    axios.post("http://localhost:9000/api/result", {x, y, email, steps})
+    .then((response) =>{
       this.setState({
-        grid: ['', '', '', '', 'B', '', '', '', ''],
-        x: 2,
-        y: 2,
-        steps: 0,
-        email: '' 
-      });
-    }else{
-      message.textContent = `You can't go ${id}`;
-    }
-    
-  }
-
-  co
-
-
-  handleChange(event){
-    this.setState({email: event.target.value});
-  }
-
-  async handleSubmit(event){
-    
-    event.preventDefault();
-    const message = document.getElementById('message');
-    const formData = {x: this.state.x, y: this.state.y, steps: this.state.steps, email: this.state.email};
-    await axios.post('http://localhost:9000/api/result', formData)
-    .then(res => {
-      message.textContent = res.data.message;
+        ...this.state,
+        message: response.data.message,
+        email: ""
+      })
     })
-    .catch(err => {
-      message.textContent = err.response.data.message;
-    })
-    .finally(() => {
+    .catch((err) => {
       this.setState({
-        grid: ['', '', '', '', 'B', '', '', '', ''],
-        x: 2,
-        y: 2,
-        steps: 0,
-        email: ''
+        ...this.state,
+        message: err.response.data.message,
+        email: ""
+      })
     })
-  })
-}
-
+  }
 
   render() {
     const { className } = this.props
+    const squares = []
+    for(let y = 1; y<=3; y++){
+    for(let x = 1; x<=3; x++){
+        const isActive = this.state.x === x && this.state.y === y
+        squares.push(<div className={isActive ? "square active" : "square"} key ={x + ',' + y}>{isActive && "B"}</div>)
+      }
+    }
     return (
       <div id="wrapper" className={className}>
         <div className="info">
           <h3 id="coordinates">Coordinates ({this.state.x}, {this.state.y})</h3>
-          <h3 id="steps">You moved {this.state.steps} {this.state.steps === 1 ? 'time' : 'times'}</h3>
+          <h3 id="steps">{this.state.steps === 1 ? `You moved ${this.state.steps} time` : `You moved ${this.state.steps} times`}</h3>
         </div>
         <div id="grid">
-          {this.state.grid.map((val, idx) => <div key={idx} className={val === 'B' ? 'square active' : 'square'}>{val}</div>)}
+          {squares}
         </div>
         <div className="info">
-          <h3 id="message"></h3>
+          <h3 id="message">{this.state.message}</h3>
         </div>
         <div id="keypad">
-          <button id="left" onClick={this.handleClick}>LEFT</button>
-          <button id="up" onClick={this.handleClick}>UP</button>
-          <button id="right" onClick={this.handleClick}>RIGHT</button>
-          <button id="down" onClick={this.handleClick}>DOWN</button>
-          <button id="reset" onClick={this.handleClick}>reset</button>
+          <button id="left" onClick = {() =>this.handleClick("Left")}>LEFT</button>
+          <button id="up" onClick = {() =>this.handleClick("Up")}>UP</button>
+          <button id="right" onClick = {() =>this.handleClick("Right")}>RIGHT</button>
+          <button id="down" onClick = {() =>this.handleClick("Down")}>DOWN</button>
+          <button id="reset" onClick = {() =>this.handleClick("Reset")}>reset</button>
         </div>
-        <form onSubmit={this.handleSubmit}>
-          <input id="email" type="email" placeholder="type email" onChange={this.handleChange}></input>
+        <form onSubmit = {this.handleSubmit}>
+          <input onChange = {(evt) =>this.setState({...this.state, email: evt.target.value})} value = {this.state.email} id="email" type="email" placeholder="type email"></input>
           <input id="submit" type="submit"></input>
         </form>
       </div>
